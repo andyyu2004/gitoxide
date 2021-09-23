@@ -381,14 +381,25 @@ impl<'event> GitConfig<'event> {
     /// assert_eq!(git_config.sections_by_name("core").len(), 3);
     /// ```
     #[must_use]
-    pub fn sections_by_name<'lookup>(&self, section_name: &'lookup str) -> Vec<&SectionBody<'event>> {
+    pub fn sections_by_name<'lookup>(
+        &self,
+        section_name: &'lookup str,
+    ) -> Vec<(Option<&Cow<'event, str>>, &SectionBody<'event>)> {
         self.get_section_ids_by_name(section_name)
             .unwrap_or_default()
             .into_iter()
             .map(|id| {
-                self.sections
+                let subsection = self
+                    .section_headers
                     .get(&id)
                     .expect("section doesn't have id from from lookup")
+                    .subsection_name
+                    .as_ref();
+                let body = self
+                    .sections
+                    .get(&id)
+                    .expect("section doesn't have id from from lookup");
+                (subsection, body)
             })
             .collect()
     }
